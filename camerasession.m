@@ -14,6 +14,7 @@ cam.resolution='1920x1080'
 %s=input(prompt,'s');
 %if s=='y'
     %for i=1:30
+    i=1;
     while 1
         
         %hold on;
@@ -34,7 +35,7 @@ cam.resolution='1920x1080'
         %imshow(image);
         %hold on;
         %viscircles(centers,radii);
-        
+        i=i+1;
         %drawnow
     end
 %end
