@@ -1,6 +1,7 @@
-snapshot = imread('Image18.png');
-checkerboard = imread('checkerboard_cropped.png');
-replacement_image = flip(imread('test_image.jpg'), 1);
+function [outputFrame] = overlayImage(snapshot,checkerboard,replacement_image)
+% snapshot = imread('Image18.png');
+% checkerboard = imread('checkerboard_cropped.png');
+% replacement_image = flip(imread('test_image.jpg'), 1);
 
 scale = size(checkerboard, 1)/size(replacement_image, 1);
 replacement_image = imresize(replacement_image, scale);
@@ -20,5 +21,5 @@ mask = warped(:,:,1) | ...
        warped(:,:,3) > 0;
 
 outputFrame = step(alphaBlender, snapshot, warped, mask);
-figure(1)
-imshow(outputFrame);
+% figure(1)
+% imshow(outputFrame);
