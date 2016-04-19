@@ -1,4 +1,9 @@
-% Setup: may be camera specific, in that case put the following in a
+
+checkerboard = imread('checkerboard_cropped.png');
+replacement_image = imread('test_image.jpg');
+
+
+% Camera setup: may be camera specific, in that case put the following in a
 % function or something
 vidobj = videoinput('winvideo', 1, 'RGB24_1920x1080');
 vidobj.ROIPosition = [149 297 1618 783];
@@ -23,22 +28,12 @@ while ishandle(image_handle)
     snapshot = getsnapshot(vidobj);
     
     % Do fancy schmancy stuff with image here!
-    imagePoints=detectCheckerboardPoints(snapshot);
     
     % Display final image
     try
-        
-        set(image_handle, 'CData', snapshot);
-        
-        % Display plot
-        if size(imagePoints) > 0
-            hold on
-            plot_handle = plot(imagePoints(1,1),imagePoints(1,2),'g*','markersize', 100,imagePoints(2:end,1),imagePoints(2:end,2),'r*','markersize', 100);
-            hold off
-        end
-        
+        image = overlayImage(snapshot, checkerboard, replacement_image);
+        set(image_handle, 'CData', image);        
         drawnow;
-        delete(plot_handle);
     catch
         % Ignore "deleted handle" error when window is closed
     end
