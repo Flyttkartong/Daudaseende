@@ -33,7 +33,7 @@ while ishandle(image_handle)
         % Display plot
         if size(imagePoints) > 0
             hold on
-            plot_handle = plot(imagePoints(:,1),imagePoints(:,2),'r*','markersize', 100);
+            plot_handle = plot(imagePoints(1,1),imagePoints(1,2),'g*','markersize', 100,imagePoints(2:end,1),imagePoints(2:end,2),'r*','markersize', 100);
             hold off
         end
         
