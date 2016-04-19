@@ -12,7 +12,8 @@ start(vidobj)
 % Create a handle used to update the figure
 snapshot = getsnapshot(vidobj);
 image_handle = imshow(snapshot);
-colormap gray
+
+%colormap gray
 
 % Disable EraseMode for performance
 set(image_handle, 'EraseMode', 'none');
@@ -22,13 +23,22 @@ while ishandle(image_handle)
     snapshot = getsnapshot(vidobj);
     
     % Do fancy schmancy stuff with image here!
-    image = rgb2gray(snapshot);
-    
+    imagePoints=detectCheckerboardPoints(snapshot);
     
     % Display final image
     try
-        set(image_handle, 'CData', image);
+        
+        set(image_handle, 'CData', snapshot);
+        
+        % Display plot
+        if size(imagePoints) > 0
+            hold on
+            plot_handle = plot(imagePoints(:,1),imagePoints(:,2),'r*','markersize', 100);
+            hold off
+        end
+        
         drawnow;
+        delete(plot_handle);
     catch
         % Ignore "deleted handle" error when window is closed
     end
@@ -37,3 +47,4 @@ end
 % Stop the image capture and clean up
 stop(vidobj)
 delete(vidobj)
+close all
