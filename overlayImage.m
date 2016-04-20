@@ -1,25 +1,35 @@
-function [outputFrame] = overlayImage(snapshot,checkerboard,replacement_image)
-% snapshot = imread('Image18.png');
-% checkerboard = imread('checkerboard_cropped.png');
-% replacement_image = flip(imread('test_image.jpg'), 1);
+function [outputFrame] = overlayImage(snapshot,reference_features,reference_pts,replacement_image,reference_image)
 
-scale = size(checkerboard, 1)/size(replacement_image, 1);
-replacement_image = imresize(replacement_image, scale);
+snapshot_gray = rgb2gray(snapshot);
+detected_pts = detectSURFFeatures(snapshot_gray);
+[snapshot_features, snapshot_pts] = extractFeatures(snapshot_gray, detected_pts);
 
-snapshot_pts = detectCheckerboardPoints(snapshot);
-checkerboard_pts = detectCheckerboardPoints(checkerboard);
+% imshow(snapshot_gray);
+% hold on
+% plot(snapshot_pts,'showOrientation',true);
 
-transform = estimateGeometricTransform(checkerboard_pts, snapshot_pts, 'projective');
+index_pairs = matchFeatures(reference_features, snapshot_features);
 
-outputView = imref2d(size(snapshot));
-warped = imwarp(replacement_image, transform, 'OutputView', outputView);
+if length(index_pairs) >= 4
+    matched_snapshot_pts = snapshot_pts(index_pairs(:,2));
+    matched_reference_pts = reference_pts(index_pairs(:,1));
+    
+%     figure; showMatchedFeatures(snapshot_gray,reference_image,matched_snapshot_pts,matched_reference_pts, 'montage');
 
-alphaBlender = vision.AlphaBlender('Operation', 'Binary mask', 'MaskSource', 'Input port');
+    transform = estimateGeometricTransform(matched_reference_pts, matched_snapshot_pts, 'projective');
 
-mask = warped(:,:,1) | ...
-       warped(:,:,2) | ...
-       warped(:,:,3) > 0;
+    outputView = imref2d(size(snapshot));
+    warped = imwarp(replacement_image, transform, 'OutputView', outputView);
 
-outputFrame = step(alphaBlender, snapshot, warped, mask);
-% figure(1)
-% imshow(outputFrame);
+    alphaBlender = vision.AlphaBlender('Operation', 'Binary mask', 'MaskSource', 'Input port');
+
+    mask = warped(:,:,1) | ...
+           warped(:,:,2) | ...
+           warped(:,:,3) > 0;
+
+    outputFrame = step(alphaBlender, snapshot, warped, mask);
+else
+    outputFrame = snapshot;
+end
+
+end

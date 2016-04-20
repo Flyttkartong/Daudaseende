@@ -1,7 +1,12 @@
 
-checkerboard = imread('checkerboard_cropped.png');
+reference_image = imread('daudasystem_smaller.jpg');
+reference_image = rgb2gray(reference_image);
 replacement_image = imread('test_image.jpg');
+scale = size(reference_image, 1)/size(replacement_image, 1);
+replacement_image = imresize(replacement_image, scale);
 
+detected_pts = detectSURFFeatures(reference_image);
+[reference_features, reference_pts] = extractFeatures(reference_image, detected_pts);
 
 % Camera setup: may be camera specific, in that case put the following in a
 % function or something
@@ -28,10 +33,11 @@ while ishandle(image_handle)
     snapshot = getsnapshot(vidobj);
     
     % Do fancy schmancy stuff with image here!
+    image = overlayImage(snapshot, reference_features, ...
+                         reference_pts, replacement_image, reference_image);
     
     % Display final image
     try
-        image = overlayImage(snapshot, checkerboard, replacement_image);
         set(image_handle, 'CData', image);        
         drawnow;
     catch
@@ -42,4 +48,3 @@ end
 % Stop the image capture and clean up
 stop(vidobj)
 delete(vidobj)
-close all
