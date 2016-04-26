@@ -1,0 +1,2 @@
+stop(vidobj)
+delete(vidobj)

@@ -1,4 +1,14 @@
-% Setup: may be camera specific, in that case put the following in a
+
+reference_image = imread('daudasystem_smaller.jpg');
+reference_image = rgb2gray(reference_image);
+replacement_image = imread('test_image.jpg');
+scale = size(reference_image, 1)/size(replacement_image, 1);
+replacement_image = imresize(replacement_image, scale);
+
+detected_pts = detectSURFFeatures(reference_image);
+[reference_features, reference_pts] = extractFeatures(reference_image, detected_pts);
+
+% Camera setup: may be camera specific, in that case put the following in a
 % function or something
 vidobj = videoinput('winvideo', 1, 'RGB24_1920x1080');
 vidobj.ROIPosition = [149 297 1618 783];
@@ -23,22 +33,13 @@ while ishandle(image_handle)
     snapshot = getsnapshot(vidobj);
     
     % Do fancy schmancy stuff with image here!
-    imagePoints=detectCheckerboardPoints(snapshot);
+    image = overlayImage(snapshot, reference_features, ...
+                         reference_pts, replacement_image, reference_image);
     
     % Display final image
     try
-        
-        set(image_handle, 'CData', snapshot);
-        
-        % Display plot
-        if size(imagePoints) > 0
-            hold on
-            plot_handle = plot(imagePoints(1,1),imagePoints(1,2),'g*','markersize', 100,imagePoints(2:end,1),imagePoints(2:end,2),'r*','markersize', 100);
-            hold off
-        end
-        
+        set(image_handle, 'CData', image);        
         drawnow;
-        delete(plot_handle);
     catch
         % Ignore "deleted handle" error when window is closed
     end
@@ -47,4 +48,3 @@ end
 % Stop the image capture and clean up
 stop(vidobj)
 delete(vidobj)
-close all
