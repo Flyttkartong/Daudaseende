@@ -4,8 +4,12 @@ reference_image = rgb2gray(reference_image);
 replacement_image = imread('test_image.jpg');
 scale = size(reference_image, 1)/size(replacement_image, 1);
 replacement_image = imresize(replacement_image, scale);
-load('calibrationCannon600D.mat')
+load('calibrationCanon600D.mat')
 Obj=read_wobj('tetra.obj')
+translationScaleMatrix=[0.2 0 0 0; 0 0.2 0 0; 0 0 .2 0;0 0 0 1];
+translatedPoints=(translationScaleMatrix*[Obj.vertices ones(4,1)]')';
+Obj.vertices=translatedPoints(:,1:3);
+
 
 
 detected_pts = detectSURFFeatures(reference_image);
@@ -36,7 +40,7 @@ while ishandle(image_handle)
     snapshot = getsnapshot(vidobj);
     
     % Do fancy schmancy stuff with image here!
-    image = overlayImage(snapshot, reference_features, ...
+    image = overlayImage3D(snapshot, reference_features, ...
                          reference_pts, replacement_image, reference_image,cameraParams,Obj);
     
     % Display final image
