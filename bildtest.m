@@ -70,25 +70,26 @@ else
 end
 E=E./E(end)
 
+cali{2}'*E*cali{1}
 
 F1=(cameraParams.IntrinsicMatrix')\E/cameraParams.IntrinsicMatrix;
-l=F1*cali{1};
+l=F1*imagePoints1;
 l = l./sqrt( repmat(l(1 ,:).^2 + l(2 ,:).^2 ,[3 1]));
-r=randi(length(cali{1}), 20,1);
+r=1:20;%randi(length(imagePoints1), 1,20);
 figure;
 imshow(im2);
 colormap gray;
 hold on;
-plot(cali{2}(1,r),cali{2}(2,r),'g+','Markersize',30)
+plot(imagePoints2(1,r),imagePoints2(2,r),'g+','Markersize',30)
 rital(l(:,r),'k');
 hold off
 legend('image points','epipolar lines')
 
 figure;
 
-hist(abs(sum(l.*cali{2})),100);
+hist(abs(sum(l.*imagePoints2)),100);
 title('Distribution of distance between image points and their corresponding epipolar line')
 xlabel('distance between the epipolar line and the corresponding image point')
 ylabel('number of image points')
 
-meanD2=mean(abs(sum(l.*cali{2})))
+meanD2=mean(abs(sum(l.*imagePoints2)))
