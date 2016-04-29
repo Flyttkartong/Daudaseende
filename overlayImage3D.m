@@ -10,34 +10,48 @@ detected_pts = detectSURFFeatures(snapshot_gray);
 
 index_pairs = matchFeatures(reference_features, snapshot_features);
 
-if length(index_pairs) >= 9
+if length(index_pairs) >= 4
     matched_snapshot_pts = snapshot_pts(index_pairs(:,2));
     matched_reference_pts = reference_pts(index_pairs(:,1));
     
 %     figure; showMatchedFeatures(snapshot_gray,reference_image,matched_snapshot_pts,matched_reference_pts, 'montage');
 
-    %transform = estimateGeometricTransform(matched_reference_pts, matched_snapshot_pts, 'projective');
-    [F,epinliers]=estimateFundamentalMatrix(matched_snapshot_pts,matched_reference_pts);
-    inliers1=matched_snapshot_pts;%matched_snapshot_pts(epinliers,:);
-    inliers2=matched_reference_pts;%matched_reference_pts(epinliers,:);
-    [R,t]= cameraPose(F,cameraParams,inliers1,inliers2);
-    P=cameraParams.IntrinsicMatrix'*[R t'];
-    %ProjectedPoints=Obj.vertices';%pflat(P*[Obj.vertices'; ones(1,length(Obj.vertices))]);
+    transform = estimateGeometricTransform(matched_reference_pts, matched_snapshot_pts, 'projective');
+    %RT=(cameraParams.IntrinsicMatrix')\(transform.T');
+    %[U,Alpha,V]=svd(H);
+    H=transfrom;
+    S=(H')'*H'-eye(3);
+    for i=1:3
+        for j=1:3
+            
+        end
+    end
+    
+    
+    
+    %P=cameraParams.IntrinsicMatrix'*[RT(1:3,1) RT(1:3,2) -cross(RT(1:3,1),RT(1:3,2)) RT(1:3,3)];
+    %P=P./P(end);
+    %F=estimateFundamentalMatrix(matched_snapshot_pts,matched_reference_pts);
+    %inliers1=matched_snapshot_pts;%matched_snapshot_pts(epinliers,:);
+    %inliers2=matched_reference_pts;%matched_reference_pts(epinliers,:);
+    %[R,t]= cameraPose(F,cameraParams,inliers1,inliers2);
+    
+    %P=cameraMatrix(cameraParams,R,t');%cameraParams.IntrinsicMatrix'*[R t'];
     ProjectedPoints=pflat(P*[Obj.vertices'; ones(1,length(Obj.vertices))]);
+    %ProjectedPoints=pflat([Obj.vertices ones(length(Obj.vertices),1)]*P);
     face1=Obj.objects(4).data.vertices(1,:);
     face2=Obj.objects(4).data.vertices(2,:);
     face3=Obj.objects(4).data.vertices(3,:);
-    face4=Obj.objects(4).data.vertices(4,:);
+    face 4=Obj.objects(4).data.vertices(4,:);
     
     %fill3(ProjectedPoints(1,face1),ProjectedPoints(2,face1),ProjectedPoints(3,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),ProjectedPoints(3,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),ProjectedPoints(3,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),ProjectedPoints(3,face4),'y');
-    %patches=fill(ProjectedPoints(1,face1),ProjectedPoints(2,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),'y');
+%     fill(ProjectedPoints(1,face1),ProjectedPoints(2,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),'y');
     patches={[ProjectedPoints(1,face1(1)) ProjectedPoints(2,face1(1)) ProjectedPoints(1,face1(2)),ProjectedPoints(2,face1(2)) ProjectedPoints(1,face1(3)) ProjectedPoints(2,face1(3))], ...
         [ProjectedPoints(1,face2(1)) ProjectedPoints(2,face2(1)) ProjectedPoints(1,face2(2)),ProjectedPoints(2,face2(2)) ProjectedPoints(1,face2(3)) ProjectedPoints(2,face2(3))], ... 
         [ProjectedPoints(1,face3(1)) ProjectedPoints(2,face3(1)) ProjectedPoints(1,face3(2)),ProjectedPoints(2,face3(2)) ProjectedPoints(1,face3(3)) ProjectedPoints(2,face3(3))], ...
         [ProjectedPoints(1,face4(1)) ProjectedPoints(2,face4(1)) ProjectedPoints(1,face4(2)),ProjectedPoints(2,face4(2)) ProjectedPoints(1,face4(3)) ProjectedPoints(2,face4(3))]};
     
     
-
     %outputView = imref2d(size(snapshot));
     %warped = imwarp(replacement_image, transform, 'OutputView', outputView);
 
