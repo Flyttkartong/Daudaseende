@@ -1,44 +1,58 @@
+% Image setup
+referenceImage = rgb2gray(imread('daudasystem_smaller.jpg'));
+replacementImage = imread('test_image.jpg');
+replacementImage = resizeFirst(replacementImage, referenceImage);
 
-reference_image = imread('daudasystem_smaller.jpg');
-reference_image = rgb2gray(reference_image);
-replacement_image = imread('test_image.jpg');
-scale = size(reference_image, 1)/size(replacement_image, 1);
-replacement_image = imresize(replacement_image, scale);
+% Get SURF features and points
+[referenceFeatures, referencePoints] = getFeatures(referenceImage);
 
-detected_pts = detectSURFFeatures(reference_image);
-[reference_features, reference_pts] = extractFeatures(reference_image, detected_pts);
-
-% Camera setup: may be camera specific, in that case put the following in a
-% function or something
-vidobj = videoinput('winvideo', 1, 'RGB24_1920x1080');
-vidobj.ROIPosition = [149 297 1618 783];
-
-% Disable frame logging for performance
-triggerconfig(vidobj, 'manual');
+% Get video object
+vidobj = setupVideoObject();
 
 % Start the image capture
 start(vidobj)
 
-% Create a handle used to update the figure
-snapshot = getsnapshot(vidobj);
-image_handle = imshow(snapshot);
+% Create a handle used to update the figure and display it
+imageHandle = setupImageHandle(vidobj);
 
-%colormap gray
+% Create point tracker object
+pointTracker = vision.PointTracker('MaxBidirectionalError', 2);
+trackedPoints = [];
+trackerInitialized = false;
+frameCount = 0;
 
-% Disable EraseMode for performance
-set(image_handle, 'EraseMode', 'none');
-
-while ishandle(image_handle)
+while ishandle(imageHandle)
+    frameCount = frameCount + 1;
+    
     % Fetch snapshot from camera
     snapshot = getsnapshot(vidobj);
     
+    if ~isempty(trackedPoints) && frameCount < 20
+        % Overlay replacement image using tracker
+        [image, trackedPoints, transform] = trackerOverlay(pointTracker, snapshot, replacementImage, trackedPoints, transform);
+    else
+        frameCount = 0;
+        % Overlay replacement image using SURF features
+        [image, trackedPoints, transform] = surfOverlay(snapshot, replacementImage, referenceFeatures, referencePoints);
+        
+        % Set new points to track if SURF matching was sucessful
+        if ~isempty(trackedPoints)
+            if trackerInitialized
+                setPoints(pointTracker, trackedPoints);
+            else
+                initialize(pointTracker, trackedPoints, snapshot);
+                trackerInitialized = true;
+            end
+        end
+    end
+    
     % Do fancy schmancy stuff with image here!
-    image = overlayImage(snapshot, reference_features, ...
-                         reference_pts, replacement_image, reference_image);
+%     image = overlayImage(snapshot, referenceFeatures, ...
+%                          referencePoints, replacementImage, referenceImage);
     
     % Display final image
     try
-        set(image_handle, 'CData', image);        
+        set(imageHandle, 'CData', image);
         drawnow;
     catch
         % Ignore "deleted handle" error when window is closed
