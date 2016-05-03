@@ -1,12 +1,14 @@
 
+load('cameraParams.mat');
 reference_image = imread('daudasystem_smaller.jpg');
 reference_image = rgb2gray(reference_image);
+% [refernce_image,newOrigin]=undistortImage(reference_image,cameraParams);
 replacement_image = imread('test_image.jpg');
 scale = size(reference_image, 1)/size(replacement_image, 1);
 replacement_image = imresize(replacement_image, scale);
-load('calibrationCanon600D.mat')
+% load('calibration160502.mat')
 Obj=read_wobj('tetra.obj')
-translationScaleMatrix=[100 0 0 100; 0 100 0 100; 0 0 100 0;0 0 0 1];
+translationScaleMatrix=[100 0 0 1; 0 100 0 1; 0 0 100 0;0 0 0 1];
 translatedPoints=(translationScaleMatrix*[Obj.vertices ones(4,1)]')';
 Obj.vertices=translatedPoints(:,1:3);
 
