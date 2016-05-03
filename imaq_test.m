@@ -27,6 +27,7 @@ while ishandle(imageHandle)
     % Fetch snapshot from camera
     snapshot = getsnapshot(vidobj);
     
+    % Do fancy stuff with the snapshot
     if ~isempty(trackedPoints) && frameCount < 20
         % Overlay replacement image using tracker
         [image, trackedPoints, transform] = trackerOverlay(pointTracker, snapshot, replacementImage, trackedPoints, transform);
@@ -45,10 +46,6 @@ while ishandle(imageHandle)
             end
         end
     end
-    
-    % Do fancy schmancy stuff with image here!
-%     image = overlayImage(snapshot, referenceFeatures, ...
-%                          referencePoints, replacementImage, referenceImage);
     
     % Display final image
     try
