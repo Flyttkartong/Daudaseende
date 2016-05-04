@@ -1,12 +1,11 @@
 
 load('cameraParams.mat');
-reference_image = imread('daudasystem_smaller.jpg');
+reference_image = imread('daudasystem.jpg');
+reference_image = imrotate(reference_image,-90);
 reference_image = rgb2gray(reference_image);
-% [refernce_image,newOrigin]=undistortImage(reference_image,cameraParams);
 replacement_image = imread('test_image.jpg');
 scale = size(reference_image, 1)/size(replacement_image, 1);
 replacement_image = imresize(replacement_image, scale);
-% load('calibration160502.mat')
 Obj=read_wobj('tetra.obj')
 translationScaleMatrix=[100 0 0 1; 0 100 0 1; 0 0 100 0;0 0 0 1];
 translatedPoints=(translationScaleMatrix*[Obj.vertices ones(4,1)]')';
@@ -20,7 +19,7 @@ detected_pts = detectSURFFeatures(reference_image);
 % Camera setup: may be camera specific, in that case put the following in a
 % function or something
 vidobj = videoinput('winvideo', 1, 'RGB24_1920x1080');
-%vidobj.ROIPosition = [149 297 1618 783];
+vidobj.ROIPosition = [149 297 1618 783];
 
 % Disable frame logging for performance
 triggerconfig(vidobj, 'manual');

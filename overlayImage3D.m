@@ -14,7 +14,7 @@ detected_pts = detectSURFFeatures(snapshot_gray);
 
 index_pairs = matchFeatures(reference_features, snapshot_features);
 
-if length(index_pairs) >= 4
+if length(index_pairs) >= 5
     matched_snapshot_pts = snapshot_pts(index_pairs(:,2));
     matched_reference_pts = reference_pts(index_pairs(:,1));
     
@@ -23,7 +23,17 @@ if length(index_pairs) >= 4
     transform = estimateGeometricTransform(matched_reference_pts, matched_snapshot_pts, 'projective');
     %RT=(cameraParams.IntrinsicMatrix')\(transform.T');
     %[U,Alpha,V]=svd(H);
+    K=cameraParams.IntrinsicMatrix';
+    Evec=calibrated_fivepoint([matched_reference_pts.Location' ;ones(1,matched_reference_pts.Count)], [matched_snapshot_pts.Location' ; ones(1,matched_snapshot_pts.Count)]);
+    
+    
+    
+    
     H=transform.T';
+%     camMotion=struct(['R','n','t'],{zeros(3),zeros(3,1),zeros(3,1)});
+    
+    
+%     [K,R,t]=cv.decomposeProjectionMatrix(H);
 %     [U,A,V]=svd(H)
 %     d1=A(1,1);
 %     d2=A(2,2);
