@@ -5,6 +5,12 @@ function [outputFrame] = overlayImage(snapshot,reference_features,reference_pts,
 [snapshot,newOrigin]=undistortImage(snapshot,cameraParams);
 snapshot_gray = rgb2gray(snapshot);
 detected_pts = detectSURFFeatures(snapshot_gray);
+%nbrOfPoints=detected_pts.Count;
+%detected_pts_coord=detected_pts.Location;
+
+
+
+
 [snapshot_features, snapshot_pts] = extractFeatures(snapshot_gray, detected_pts);
 
 
@@ -13,10 +19,39 @@ detected_pts = detectSURFFeatures(snapshot_gray);
 % plot(snapshot_pts,'showOrientation',true);
 
 index_pairs = matchFeatures(reference_features, snapshot_features);
+matched_snapshot_pts = snapshot_pts(index_pairs(:,2));
+matched_reference_pts = reference_pts(index_pairs(:,1));
+nbrOfPoints=matched_snapshot_pts.Count;
+matched_snapshot_pts_coord=matched_snapshot_pts.Location;
+median_pt=median(matched_snapshot_pts_coord);
+pts_std=std(matched_snapshot_pts_coord);
+i=1;
+figure;
+imagesc(snapshot);
+hold on;
+plot(median_pt(1),median_pt(2),'yo','markersize',20)
+plot(matched_snapshot_pts_coord(:,1),matched_snapshot_pts_coord(:,2),'r*','markersize',20)
+hold off;
+
+while i<=nbrOfPoints
+    if norm(matched_snapshot_pts_coord(i,:)-median_pt) > 3*norm(pts_std)
+        matched_snapshot_pts_coord(i,:)=[];
+        nbrOfPoints=nbrOfPoints-1;
+    else
+        i=i+1;
+    end
+end
+i=1;
+
+figure;
+imagesc(snapshot);
+hold on;
+plot(median_pt(1),median_pt(2),'yo','markersize',20)
+plot(matched_snapshot_pts_coord(:,1),matched_snapshot_pts_coord(:,2),'r*','markersize',20)
+hold off
 
 if length(index_pairs) >= 5
-    matched_snapshot_pts = snapshot_pts(index_pairs(:,2));
-    matched_reference_pts = reference_pts(index_pairs(:,1));
+
     
 %     figure; showMatchedFeatures(snapshot_gray,reference_image,matched_snapshot_pts,matched_reference_pts, 'montage');
 %     matched_snapshot_pts=cameraParams.IntrinsicMatrix'\matched_snapshot_pts;   
@@ -24,7 +59,7 @@ if length(index_pairs) >= 5
     %RT=(cameraParams.IntrinsicMatrix')\(transform.T');
     %[U,Alpha,V]=svd(H);
     K=cameraParams.IntrinsicMatrix';
-    Evec=calibrated_fivepoint([matched_reference_pts.Location' ;ones(1,matched_reference_pts.Count)], [matched_snapshot_pts.Location' ; ones(1,matched_snapshot_pts.Count)]);
+    Evec=calibrated_fivepoint([matched_reference_pts.Location ones(matched_reference_pts.Count,1)], [matched_snapshot_pts_coord  ones(size(matched_snapshot_pts_coord,1),1)]);
     
     
     
