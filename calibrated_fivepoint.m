@@ -88,6 +88,11 @@ M(8,2) = 1;
 M(9,4) = 1;
 M(10,7) = 1;
 
+%exit if values are faulty
+if any(max(isnan(M)))~=0 || isreal(eig(M))~=1
+    Evec=zeros(1);
+    return;
+end
 [V,D] = eig(M);
 SOLS =   V(7:9,:)./(ones(3,1)*V(10,:));
 

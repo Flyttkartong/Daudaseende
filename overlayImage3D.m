@@ -2,12 +2,14 @@ function [outputFrame] = overlayImage(snapshot,reference_features,reference_pts,
 
 
 
-[snapshot,newOrigin]=undistortImage(snapshot,cameraParams);
+%[snapshotRect,newOrigin]=undistortImage(snapshot,cameraParams);
 snapshot_gray = rgb2gray(snapshot);
 detected_pts = detectSURFFeatures(snapshot_gray);
 %nbrOfPoints=detected_pts.Count;
 %detected_pts_coord=detected_pts.Location;
-
+Kref=[290/2 0 290/2;0 201/2 201/2; 0 0 1];
+Pcell=cell(4);
+P=[];
 
 
 
@@ -23,32 +25,35 @@ matched_snapshot_pts = snapshot_pts(index_pairs(:,2));
 matched_reference_pts = reference_pts(index_pairs(:,1));
 nbrOfPoints=matched_snapshot_pts.Count;
 matched_snapshot_pts_coord=matched_snapshot_pts.Location;
+matched_reference_pts_coord=matched_reference_pts.Location;
 median_pt=median(matched_snapshot_pts_coord);
 pts_std=std(matched_snapshot_pts_coord);
 i=1;
-figure;
-imagesc(snapshot);
-hold on;
-plot(median_pt(1),median_pt(2),'yo','markersize',20)
-plot(matched_snapshot_pts_coord(:,1),matched_snapshot_pts_coord(:,2),'r*','markersize',20)
-hold off;
+% figure;
+% imagesc(snapshot);
+% hold on;
+% plot(median_pt(1),median_pt(2),'yo','markersize',20)
+% plot(matched_snapshot_pts_coord(:,1),matched_snapshot_pts_coord(:,2),'r*','markersize',20)
+% hold off;
 
-while i<=nbrOfPoints
-    if norm(matched_snapshot_pts_coord(i,:)-median_pt) > 3*norm(pts_std)
-        matched_snapshot_pts_coord(i,:)=[];
-        nbrOfPoints=nbrOfPoints-1;
-    else
-        i=i+1;
-    end
-end
-i=1;
 
-figure;
-imagesc(snapshot);
-hold on;
-plot(median_pt(1),median_pt(2),'yo','markersize',20)
-plot(matched_snapshot_pts_coord(:,1),matched_snapshot_pts_coord(:,2),'r*','markersize',20)
-hold off
+%First filter of outliers, can cause matching issues.
+% while i<=nbrOfPoints
+%     if norm(matched_snapshot_pts_coord(i,:)-median_pt) > 3*norm(pts_std)
+%         matched_snapshot_pts_coord(i,:)=[];
+%         nbrOfPoints=nbrOfPoints-1;
+%     else
+%         i=i+1;
+%     end
+% end
+% i=1;
+
+% figure;
+% imagesc(snapshot);
+% hold on;
+% plot(median_pt(1),median_pt(2),'yo','markersize',20)
+% plot(matched_snapshot_pts_coord(:,1),matched_snapshot_pts_coord(:,2),'r*','markersize',20)
+% hold off
 
 if length(index_pairs) >= 5
 
@@ -59,12 +64,61 @@ if length(index_pairs) >= 5
     %RT=(cameraParams.IntrinsicMatrix')\(transform.T');
     %[U,Alpha,V]=svd(H);
     K=cameraParams.IntrinsicMatrix';
-    Evec=calibrated_fivepoint([matched_reference_pts.Location ones(matched_reference_pts.Count,1)], [matched_snapshot_pts_coord  ones(size(matched_snapshot_pts_coord,1),1)]);
+    input1all=Kref\[matched_reference_pts.Location ones(matched_reference_pts.Count,1)]';
+    input2all=K\[matched_snapshot_pts_coord  ones(size(matched_snapshot_pts_coord,1),1)]';  
     
-    
-    
-    
-    H=transform.T';
+    % RANSAC approach
+   bestE=[];
+   bestEInd=10;
+   for j=1:100
+       indices=randi(length(input1all),5);
+       input1=input1all(indices);
+       input2=input2all(indices);
+   
+       Evec=calibrated_fivepoint(input1(:,1:5), input2(:,1:5));
+       if size(Evec,1)~=1
+           for a=1:size(Evec,2)
+               E=reshape(Evec(:,a),3,3);
+               %Test epipolar contraint
+               comparator=max(input2all'*E*input1all);
+               if comparator<bestEInd
+                   bestE=E;
+                   bestEInd=comparator;
+               end
+           end
+       end     
+   end
+   if isempty(bestE)==1
+        locs = matched_snapshot_pts_coord;
+        circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+        outputFrame = insertShape(snapshot, 'Circle', circlePositions);
+        disp('Could not compute Essential matrix')
+        return
+   end
+   
+   [U,S,V]=svd(bestE);
+   W=[0 -1 0; 1 0 0; 0 0 1];
+   Pcell{1}=K*[U*W*V' U(:,3)];
+   Pcell{2}=K*[U*W*V' -U(:,3)];
+   Pcell{3}=K*[U*W'*V' U(:,3)];
+   Pcell{4}=K*[U*W'*V' -U(:,3)];
+   for i=1:4
+       ProjectedPoints=Pcell{i}*[Obj.vertices'; ones(1,length(Obj.vertices))];
+       if any(ProjectedPoints(end,:)<0)==0
+           P=Pcell{i};
+       end
+   end
+
+   if isempty(P)==1
+       locs = matched_snapshot_pts_coord;
+       circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+       outputFrame = insertShape(snapshot, 'Circle', circlePositions);
+     
+       disp('Could not compute Camera matrix') 
+       return
+   end
+   
+    %H=transform.T';
 %     camMotion=struct(['R','n','t'],{zeros(3),zeros(3,1),zeros(3,1)});
     
     
@@ -173,7 +227,7 @@ if length(index_pairs) >= 5
 %     
 %     P=cameraParams.IntrinsicMatrix'*[RaT' ta];
 %     P=real(P);
-    P=cameraParams.IntrinsicMatrix'*H*[eye(3) ones(3,1)];
+    %P=cameraParams.IntrinsicMatrix'*H*[eye(3) ones(3,1)];
 %     P=cameraParams.IntrinsicMatrix'*[RaT' ta];
     %P=P./P(end);
     %F=estimateFundamentalMatrix(matched_snapshot_pts,matched_reference_pts);
@@ -189,8 +243,10 @@ if length(index_pairs) >= 5
     face3=Obj.objects(4).data.vertices(3,:);
     face4=Obj.objects(4).data.vertices(4,:);
     
+    %figure;
     %fill3(ProjectedPoints(1,face1),ProjectedPoints(2,face1),ProjectedPoints(3,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),ProjectedPoints(3,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),ProjectedPoints(3,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),ProjectedPoints(3,face4),'y');
-%     fill(ProjectedPoints(1,face1),ProjectedPoints(2,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),'y');
+    %fill(ProjectedPoints(1,face1),ProjectedPoints(2,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),'y');
+    
     patches={[ProjectedPoints(1,face1(1)) ProjectedPoints(2,face1(1)) ProjectedPoints(1,face1(2)),ProjectedPoints(2,face1(2)) ProjectedPoints(1,face1(3)) ProjectedPoints(2,face1(3))], ...
         [ProjectedPoints(1,face2(1)) ProjectedPoints(2,face2(1)) ProjectedPoints(1,face2(2)),ProjectedPoints(2,face2(2)) ProjectedPoints(1,face2(3)) ProjectedPoints(2,face2(3))], ... 
         [ProjectedPoints(1,face3(1)) ProjectedPoints(2,face3(1)) ProjectedPoints(1,face3(2)),ProjectedPoints(2,face3(2)) ProjectedPoints(1,face3(3)) ProjectedPoints(2,face3(3))], ...
@@ -209,6 +265,9 @@ if length(index_pairs) >= 5
     %patches = projectMesh(P,Obj);
     %outputFrame = insertShape(snapshot,'FilledPolygon',patches);      
     outputFrame = insertShape(snapshot,'FilledPolygon',patches,'Color',{'red', 'green', 'blue','yellow' }); %step(alphaBlender, snapshot, warped, mask);
+    locs = matched_snapshot_pts_coord;
+    circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+    outputFrame = insertShape(outputFrame, 'Circle', circlePositions);
 else
     outputFrame = snapshot;
 end
