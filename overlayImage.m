@@ -25,8 +25,10 @@ catch
     outputFrame = snapshot;
     transform = [];
 end
-    locs = snapshotPoints;
-    circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
-    outputFrame = insertShape(outputFrame, 'Circle', circlePositions);
+
+% Display tracked points (for debugging)
+locs = snapshotPoints;
+circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+outputFrame = insertShape(outputFrame, 'Circle', circlePositions);
 
 end

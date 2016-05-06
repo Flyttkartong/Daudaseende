@@ -2,10 +2,9 @@ function [outputFrame, trackedPoints, transform] = trackerOverlay(pointTracker, 
 
 [trackedPoints, isValid] = step(pointTracker, snapshot);
 
-newValidLocations = trackedPoints(isValid,:);
-oldValidLocations = oldTrackedPoints(isValid,:);
-
 if nnz(isValid) >= 4
+    newValidLocations = trackedPoints(isValid,:);
+    oldValidLocations = oldTrackedPoints(isValid,:);
     [outputFrame, transform] = overlayImage(snapshot, replacementImage, newValidLocations, oldValidLocations, transform);
     trackedPoints = newValidLocations;
     pointTracker.setPoints(newValidLocations);
