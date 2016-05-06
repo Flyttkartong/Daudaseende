@@ -80,6 +80,11 @@ Q = [Q1(:,1).*Q2(:,1) , ...
 EE = V(:,6:9);
    
 A = calibrated_fivepoint_helper( EE ) ;
+if any(max(isnan(A)))~=0 || min(all(A(:,11:20)))==0
+    Evec=zeros(1);
+    return;
+end
+
 A = A(:,1:10)\A(:,11:20);
 M = -A([1 2 3 5 6 8], :);
    
