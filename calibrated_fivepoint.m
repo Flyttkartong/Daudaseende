@@ -89,7 +89,7 @@ M(9,4) = 1;
 M(10,7) = 1;
 
 %exit if values are faulty
-if any(max(isnan(M)))~=0 || isreal(eig(M))~=1
+if any(max(isnan(M)))~=0 || cond(M)>1e15
     Evec=zeros(1);
     return;
 end

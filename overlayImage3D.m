@@ -71,9 +71,9 @@ if length(index_pairs) >= 5
    bestE=[];
    bestEInd=10;
    for j=1:100
-       indices=randi(length(input1all),5);
-       input1=input1all(indices);
-       input2=input2all(indices);
+       indices=randi(length(input1all),5,1);
+       input1=input1all(:,indices);
+       input2=input2all(:,indices);
    
        Evec=calibrated_fivepoint(input1(:,1:5), input2(:,1:5));
        if size(Evec,1)~=1
@@ -242,6 +242,8 @@ if length(index_pairs) >= 5
     face2=Obj.objects(4).data.vertices(2,:);
     face3=Obj.objects(4).data.vertices(3,:);
     face4=Obj.objects(4).data.vertices(4,:);
+    
+    xtilde={input1all,input2all};
     
     %figure;
     %fill3(ProjectedPoints(1,face1),ProjectedPoints(2,face1),ProjectedPoints(3,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),ProjectedPoints(3,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),ProjectedPoints(3,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),ProjectedPoints(3,face4),'y');
