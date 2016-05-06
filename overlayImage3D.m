@@ -67,7 +67,7 @@ if length(index_pairs) >= 5
     input1all=Kref\[matched_reference_pts.Location ones(matched_reference_pts.Count,1)]';
     input2all=K\[matched_snapshot_pts_coord  ones(size(matched_snapshot_pts_coord,1),1)]';  
     
-    % RANSAC approach
+   % RANSAC approach
    bestE=[];
    bestEInd=10;
    for j=1:100
