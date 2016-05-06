@@ -7,3 +7,5 @@ rital.m
 
 *.prj
 *.mexw64
+plotcams.m
+*.MOV
