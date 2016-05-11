@@ -88,8 +88,9 @@ if length(index_pairs) >= 5
         Evec=calibrated_fivepoint(input1(:,1:5), input2(:,1:5));
         if size(Evec,1)~=1
             for a=1:size(Evec,2)
+                currentIndex = j + a - 1;
                 E=reshape(Evec(:,a),3,3);
-                Ecell{j,a}=E;
+                Ecell{currentIndex}=E;
                 %Test epipolar contraint
                 for i=1:size(input2all,2)
                     comparator(i)=input2all(:,i)'*E*input1all(:,i);
@@ -97,8 +98,8 @@ if length(index_pairs) >= 5
                     inliermask(i)= comparator(i)<inlierDiscriminator;
                     %                 inliercounter=length(find(inlierIndex));
                 end
-                inliers{j,a}=find(inliermask);
-                inliercounter(j,a)=sum(inliermask);
+                inliers{currentIndex}=find(inliermask);
+                inliercounter(currentIndex)=sum(inliermask);
                 %comparator=max(input2all'*E*input1all);
                 %             if inliercounter>maxinliers;
                 %                 bestE=E;
@@ -108,9 +109,17 @@ if length(index_pairs) >= 5
             end
         end
     end
-    [bestRow,bestCol]=find(inliercounter==max(max(inliercounter)));
-    bestE=Ecell{bestRow,bestCol};
-    bestIndices=inliers{bestRow,bestCol};
+    if nnz(inliercounter) == 0
+        locs = matched_snapshot_pts_coord;
+        circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+        outputFrame = insertShape(snapshot, 'Circle', circlePositions);
+        disp('Could not compute Essential matrix')
+        return
+    end
+    
+    bestRow=find(inliercounter==max(inliercounter));
+    bestE=Ecell{bestRow};
+    bestIndices=inliers{bestRow};
     if isempty(bestE)==1
         locs = matched_snapshot_pts_coord;
         circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
