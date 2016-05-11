@@ -108,7 +108,7 @@ if length(index_pairs) >= 5
             end
         end
     end
-    [bestRow,bestCol]=find(inliercounter==max(max(inliercounter)));
+    [bestRow,bestCol]=find(inliercounter==max(max(inliercounter)),1);
     bestE=Ecell{bestRow,bestCol};
     bestIndices=inliers{bestRow,bestCol};
     if isempty(bestE)==1
