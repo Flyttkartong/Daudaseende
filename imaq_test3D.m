@@ -1,4 +1,4 @@
-
+clean
 load('cameraParams.mat');
 reference_image = imread('daudasystem_smaller.jpg');
 reference_image = imrotate(reference_image,-90);
