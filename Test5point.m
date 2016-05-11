@@ -33,14 +33,21 @@ input2all=[matched_i2_pts.Location' ; ones(1,matched_i2_pts.Count)];
 input1all=K\input1all;
 input2all=K\input2all;
 
-xtilde={input1all,input2all};
 im1=i1;
 im2=i2;
 
+iterations=10000;
 bestE=[];
-bestEInd=10;
+%bestEInd=0.02;
+inlierDiscriminator=0.02;
 bestIndices=[];
-for j=1:1000
+comparator=zeros(1,size(input2all,2));
+inliermask=zeros(1,size(input2all,2));
+nbrOfInliers=zeros(1,iterations);
+inliercounter=[];
+inliers={};
+Ecell={};
+for j=1:iterations
     indices=randi(length(input1all),5,1);
     input1=input1all(:,indices);
     input2=input2all(:,indices);
@@ -49,25 +56,42 @@ for j=1:1000
     if size(Evec,1)~=1
         for a=1:size(Evec,2)
             E=reshape(Evec(:,a),3,3);
+            Ecell{j,a}=E;
             %Test epipolar contraint
-            comparator=max(input2all'*E*input1all);
-            if comparator<bestEInd
-                bestE=E;
-                bestEInd=comparator;
-                bestIndices=indices;
+            for i=1:size(input2all,2)
+                comparator(i)=input2all(:,i)'*E*input1all(:,i);
+                comparator(i)=abs(comparator(i));
+                inliermask(i)= comparator(i)<inlierDiscriminator;
+%                 inliercounter=length(find(inlierIndex));
             end
+            inliers{j,a}=find(inliermask);
+            inliercounter(j,a)=sum(inliermask);
+            %comparator=max(input2all'*E*input1all);
+%             if inliercounter>maxinliers;
+%                 bestE=E;
+%                 bestEInd=max(comparator);
+%                 bestIndices=find(inlierIndex);
+%             end
         end
     end
 end
+[bestRow,bestCol]=find(inliercounter==max(max(inliercounter)));
+bestE=Ecell{bestRow,bestCol};
+bestIndices=inliers{bestRow,bestCol};
+
+
+
 if isempty(bestE)==1
-    locs = matched_snapshot_pts_coord;
-    circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
-    outputFrame = insertShape(snapshot, 'Circle', circlePositions);
+    %locs = matched_snapshot_pts_coord;
+    %circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+    %outputFrame = insertShape(snapshot, 'Circle', circlePositions);
     disp('Could not compute Essential matrix')
+    return
 else
     figure
     % Not completely sure if this is the correct way to index and display the points
     showMatchedFeatures(i1,i2,matched_i1_pts(bestIndices),matched_i2_pts(bestIndices),'Montage')
+    size(matched_i1_pts(bestIndices))
 end
 
 [U,S,V]=svd(bestE);
@@ -79,6 +103,9 @@ Pcell{4}=[U*W'*V' -U(:,3)];
 P1=[eye(3) [0 0 0]'];
 
 P_2=Pcell;
+
+xtilde={input1all(bestIndices),input2all(bestIndices)};
+
 
 %% Setup DLT
 
