@@ -39,7 +39,7 @@ im2=i2;
 iterations=10000;
 bestE=[];
 %bestEInd=0.02;
-inlierDiscriminator=0.02;
+inlierDiscriminator=0.0008;
 bestIndices=[];
 comparator=zeros(1,size(input2all,2));
 inliermask=zeros(1,size(input2all,2));
@@ -104,7 +104,7 @@ P1=[eye(3) [0 0 0]'];
 
 P_2=Pcell;
 
-xtilde={input1all(bestIndices),input2all(bestIndices)};
+xtilde={input1all(:,bestIndices),input2all(:,bestIndices)};
 
 
 %% Setup DLT
