@@ -1,4 +1,4 @@
-function [outputFrame] = overlayImage(snapshot,reference_features,reference_pts,replacement_image,reference_image,cameraParams,Obj)
+function [outputFrame] = overlayImage3D(snapshot,reference_features,reference_pts,replacement_image,reference_image,cameraParams,Obj)
 
 
 
@@ -85,16 +85,19 @@ if length(index_pairs) >= 5
         input1=input1all(:,indices);
         input2=input2all(:,indices);
         
-        Evec=calibrated_fivepoint(input1(:,1:5), input2(:,1:5));
-        if size(Evec,1)~=1
-            for a=1:size(Evec,2)
+        %Evec=calibrated_fivepoint(input1(:,1:5), input2(:,1:5));
+        E=Ematrix5pt(input1, input2);
+        
+            for a=1:size(E,3)
                 currentIndex = j + a - 1;
-                E=reshape(Evec(:,a),3,3);
-                Ecell{currentIndex}=E;
+                Ecell{currentIndex}=E(:,:,a)';;
                 %Test epipolar contraint
                 for i=1:size(input2all,2)
-                    comparator(i)=input2all(:,i)'*E*input1all(:,i);
-                    comparator(i)=abs(comparator(i));
+                   
+                    
+                    samp2=input2all(:,i)'*Ecell{currentIndex};
+                    samp1=Ecell{currentIndex}*input1all(:,i);
+                    comparator(i)=(input2all(:,i)'*Ecell{currentIndex}*input1all(:,i))/sqrt(samp2(1)^2+samp2(2)^2+samp1(1)^2+samp1(2)^2);
                     inliermask(i)= comparator(i)<inlierDiscriminator;
                     %                 inliercounter=length(find(inlierIndex));
                 end
@@ -107,8 +110,8 @@ if length(index_pairs) >= 5
                 %                 bestIndices=find(inlierIndex);
                 %             end
             end
-        end
-    end
+        
+    end    
     if nnz(inliercounter) == 0
         locs = matched_snapshot_pts_coord;
         circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
@@ -130,18 +133,21 @@ if length(index_pairs) >= 5
     
     [U,S,V]=svd(bestE);
     W=[0 -1 0; 1 0 0; 0 0 1];
+    
+    
+    
     Pcell{1}=K*[U*W*V' U(:,3)];
     Pcell{2}=K*[U*W*V' -U(:,3)];
     Pcell{3}=K*[U*W'*V' U(:,3)];
     Pcell{4}=K*[U*W'*V' -U(:,3)];
     for i=1:4
         ProjectedPoints=Pcell{i}*[Obj.vertices'; ones(1,length(Obj.vertices))];
-        if any(ProjectedPoints(end,:)<0)==0
+        if ~any(ProjectedPoints(end,:)<0)
             P=Pcell{i};
         end
     end
     
-    if isempty(P)==1
+    if isempty(P)
         locs = matched_snapshot_pts_coord;
         circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
         outputFrame = insertShape(snapshot, 'Circle', circlePositions);

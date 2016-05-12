@@ -6,9 +6,9 @@ reference_image = rgb2gray(reference_image);
 replacement_image = imread('test_image.jpg');
 scale = size(reference_image, 1)/size(replacement_image, 1);
 replacement_image = imresize(replacement_image, scale);
-%Obj=read_wobj('tetra.obj')
-load('tetraMat.mat');
-translationScaleMatrix=[1/100 0 0 0; 0 1/100 0 0; 0 0 1/100 1;0 0 0 1];
+Obj=read_wobj('tetra.obj')
+%load('tetraMat.mat');
+translationScaleMatrix=[1/10 0 0 0; 0 1/10 0 0; 0 0 1/10 0;0 0 0 1];
 translatedPoints=(translationScaleMatrix*[Obj.vertices ones(4,1)]')';
 Obj.vertices=translatedPoints(:,1:3);
 
