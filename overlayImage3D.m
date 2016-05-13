@@ -4,7 +4,7 @@ function [outputFrame] = overlayImage3D(snapshot,reference_features,reference_pt
 
 %[snapshotRect,newOrigin]=undistortImage(snapshot,cameraParams);
 snapshot_gray = rgb2gray(snapshot);
-detected_pts = detectSURFFeatures(snapshot_gray);
+detected_pts = detectSURFFeatures(snapshot_gray,'ROI',[149 297 1618 783]);
 %nbrOfPoints=detected_pts.Count;
 %detected_pts_coord=detected_pts.Location;
 Kref=[290/2 0 290/2;0 201/2 201/2; 0 0 1];
@@ -60,7 +60,7 @@ if length(index_pairs) >= 5
     
     %     figure; showMatchedFeatures(snapshot_gray,reference_image,matched_snapshot_pts,matched_reference_pts, 'montage');
     %     matched_snapshot_pts=cameraParams.IntrinsicMatrix'\matched_snapshot_pts;
-    transform = estimateGeometricTransform(matched_reference_pts, matched_snapshot_pts, 'projective');
+    %     transform = estimateGeometricTransform(matched_reference_pts, matched_snapshot_pts, 'projective');
     %RT=(cameraParams.IntrinsicMatrix')\(transform.T');
     %[U,Alpha,V]=svd(H);
     K=cameraParams.IntrinsicMatrix';
@@ -158,10 +158,10 @@ if length(index_pairs) >= 5
     
     ProjectedPoints=pflat(P*[Obj.vertices'; ones(1,length(Obj.vertices))]);
     %ProjectedPoints=pflat([Obj.vertices ones(length(Obj.vertices),1)]*P);
-    face1=Obj.objects(4).data.vertices(1,:);
-    face2=Obj.objects(4).data.vertices(2,:);
-    face3=Obj.objects(4).data.vertices(3,:);
-    face4=Obj.objects(4).data.vertices(4,:);
+    %face1=Obj.objects(4).data.vertices(1,:);
+    %face2=Obj.objects(4).data.vertices(2,:);
+    %face3=Obj.objects(4).data.vertices(3,:);
+    %face4=Obj.objects(4).data.vertices(4,:);
     
     xtilde={input1all,input2all};
     
@@ -169,10 +169,10 @@ if length(index_pairs) >= 5
     %fill3(ProjectedPoints(1,face1),ProjectedPoints(2,face1),ProjectedPoints(3,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),ProjectedPoints(3,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),ProjectedPoints(3,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),ProjectedPoints(3,face4),'y');
     %fill(ProjectedPoints(1,face1),ProjectedPoints(2,face1),'r',ProjectedPoints(1,face2),ProjectedPoints(2,face2),'b',ProjectedPoints(1,face3),ProjectedPoints(2,face3),'g',ProjectedPoints(1,face4),ProjectedPoints(2,face4),'y');
     
-    patches={[ProjectedPoints(1,face1(1)) ProjectedPoints(2,face1(1)) ProjectedPoints(1,face1(2)),ProjectedPoints(2,face1(2)) ProjectedPoints(1,face1(3)) ProjectedPoints(2,face1(3))], ...
-        [ProjectedPoints(1,face2(1)) ProjectedPoints(2,face2(1)) ProjectedPoints(1,face2(2)),ProjectedPoints(2,face2(2)) ProjectedPoints(1,face2(3)) ProjectedPoints(2,face2(3))], ...
-        [ProjectedPoints(1,face3(1)) ProjectedPoints(2,face3(1)) ProjectedPoints(1,face3(2)),ProjectedPoints(2,face3(2)) ProjectedPoints(1,face3(3)) ProjectedPoints(2,face3(3))], ...
-        [ProjectedPoints(1,face4(1)) ProjectedPoints(2,face4(1)) ProjectedPoints(1,face4(2)),ProjectedPoints(2,face4(2)) ProjectedPoints(1,face4(3)) ProjectedPoints(2,face4(3))]};
+    %patches={[ProjectedPoints(1,face1(1)) ProjectedPoints(2,face1(1)) ProjectedPoints(1,face1(2)),ProjectedPoints(2,face1(2)) ProjectedPoints(1,face1(3)) ProjectedPoints(2,face1(3))], ...
+%         [ProjectedPoints(1,face2(1)) ProjectedPoints(2,face2(1)) ProjectedPoints(1,face2(2)),ProjectedPoints(2,face2(2)) ProjectedPoints(1,face2(3)) ProjectedPoints(2,face2(3))], ...
+%         [ProjectedPoints(1,face3(1)) ProjectedPoints(2,face3(1)) ProjectedPoints(1,face3(2)),ProjectedPoints(2,face3(2)) ProjectedPoints(1,face3(3)) ProjectedPoints(2,face3(3))], ...
+%         [ProjectedPoints(1,face4(1)) ProjectedPoints(2,face4(1)) ProjectedPoints(1,face4(2)),ProjectedPoints(2,face4(2)) ProjectedPoints(1,face4(3)) ProjectedPoints(2,face4(3))]};
     
     
     %outputView = imref2d(size(snapshot));
@@ -184,9 +184,17 @@ if length(index_pairs) >= 5
     %warped(:,:,2) | ...
     % warped(:,:,3) > 0;
     %{'red', 'green', 'blue','yellow' }
-    %patches = projectMesh(P,Obj);
-    %outputFrame = insertShape(snapshot,'FilledPolygon',patches);
-    outputFrame = insertShape(snapshot,'FilledPolygon',patches,'Color',{'red', 'green', 'blue','yellow' }); %step(alphaBlender, snapshot, warped, mask);
+    patches = projectMesh(P,Obj);
+    if isempty(patches)
+        outputFrame = snapshot;
+        disp('backface culled');
+        locs = matched_snapshot_pts_coord;
+        circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+        outputFrame = insertShape(outputFrame, 'Circle', circlePositions);
+        return;
+    end    
+    outputFrame = insertShape(snapshot,'FilledPolygon',patches);
+    %outputFrame = insertShape(snapshot,'FilledPolygon',patches,'Color',{'red', 'green', 'blue','yellow' }); %step(alphaBlender, snapshot, warped, mask);
     locs = matched_snapshot_pts_coord;
     circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
     outputFrame = insertShape(outputFrame, 'Circle', circlePositions);
