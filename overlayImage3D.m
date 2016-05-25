@@ -70,7 +70,7 @@ if length(index_pairs) >= 5
     % RANSAC approach
     bestE=[];
     bestEInd=10;
-    iterations=100;
+    iterations=1000;
     inlierDiscriminator=0.0008;
     bestIndices=[];
     comparator=zeros(1,size(input2all,2));
@@ -79,6 +79,8 @@ if length(index_pairs) >= 5
     inliercounter=[];
     inliers={};
     Ecell={};
+    testInliers=0;
+    maxInliers=0;
     
     for j=1:iterations
         indices=randi(length(input1all),5,1);
@@ -90,19 +92,31 @@ if length(index_pairs) >= 5
         
             for a=1:size(E,3)
                 currentIndex = j + a - 1;
-                Ecell{currentIndex}=E(:,:,a)';;
+                Etest=E(:,:,a)';
+%                 Ecell{currentIndex}=E(:,:,a)';
                 %Test epipolar contraint
                 for i=1:size(input2all,2)
                    
                     
-                    samp2=input2all(:,i)'*Ecell{currentIndex};
-                    samp1=Ecell{currentIndex}*input1all(:,i);
-                    comparator(i)=(input2all(:,i)'*Ecell{currentIndex}*input1all(:,i))/sqrt(samp2(1)^2+samp2(2)^2+samp1(1)^2+samp1(2)^2);
-                    inliermask(i)= comparator(i)<inlierDiscriminator;
+%                     samp2=input2all(:,i)'*Ecell{currentIndex};
+                
+%                     samp1=Ecell{currentIndex}*input1all(:,i);
+                    samp2=input2all(:,i)'*Etest;
+                    samp1=Etest*input1all(:,i);
+%                     comparator(i)=(input2all(:,i)'*Ecell{currentIndex}*input1all(:,i))/sqrt(samp2(1)^2+samp2(2)^2+samp1(1)^2+samp1(2)^2);
+                    
+%                     inliermask(i)= comparator(i)<inlierDiscriminator;
                     %                 inliercounter=length(find(inlierIndex));
+                    if  (input2all(:,i)'*Etest*input1all(:,i))/sqrt(samp2(1)^2+samp2(2)^2+samp1(1)^2+samp1(2)^2)<inlierDiscriminator
+                        testInliers=testInliers+1;
+                    end
                 end
-                inliers{currentIndex}=find(inliermask);
-                inliercounter(currentIndex)=sum(inliermask);
+                if testInliers>maxInliers
+                   maxInliers=testInliers;
+                   bestE=Etest;
+                end
+%                 inliers{currentIndex}=find(inliermask);
+%                 inliercounter(currentIndex)=sum(inliermask);
                 %comparator=max(input2all'*E*input1all);
                 %             if inliercounter>maxinliers;
                 %                 bestE=E;
@@ -112,17 +126,17 @@ if length(index_pairs) >= 5
             end
         
     end    
-    if nnz(inliercounter) == 0
-        locs = matched_snapshot_pts_coord;
-        circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
-        outputFrame = insertShape(snapshot, 'Circle', circlePositions);
-        disp('Could not compute Essential matrix')
-        return
-    end
-    
-    bestRow=find(inliercounter==max(inliercounter));
-    bestE=Ecell{bestRow};
-    bestIndices=inliers{bestRow};
+%     if nnz(inliercounter) == 0
+%         locs = matched_snapshot_pts_coord;
+%         circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
+%         outputFrame = insertShape(snapshot, 'Circle', circlePositions);
+%         disp('Could not compute Essential matrix')
+%         return
+%     end
+%     
+%     bestRow=find(inliercounter==max(inliercounter));
+%     bestE=Ecell{bestRow};
+%     bestIndices=inliers{bestRow};
     if isempty(bestE)==1
         locs = matched_snapshot_pts_coord;
         circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
