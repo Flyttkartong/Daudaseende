@@ -7,7 +7,7 @@ snapshot_gray = rgb2gray(snapshot);
 detected_pts = detectSURFFeatures(snapshot_gray,'ROI',[149 297 1618 783]);
 %nbrOfPoints=detected_pts.Count;
 %detected_pts_coord=detected_pts.Location;
-Kref=[290/2 0 290/2;0 201/2 201/2; 0 0 1];
+Kref=[499/2 0 499/2;0 353/2 353/2; 0 0 1];
 Pcell=cell(4);
 P=[];
 
@@ -184,16 +184,17 @@ if length(index_pairs) >= 5
     %warped(:,:,2) | ...
     % warped(:,:,3) > 0;
     %{'red', 'green', 'blue','yellow' }
-    patches = projectMesh(P,Obj);
+    [patches] = projectMesh(P,Obj);
+    outputFrame = insertShape(snapshot,'Polygon',patches,'Color','Blue','Linewidth',4);
     if isempty(patches)
-        outputFrame = snapshot;
+%         outputFrame = snapshot;
         disp('backface culled');
         locs = matched_snapshot_pts_coord;
         circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];
         outputFrame = insertShape(outputFrame, 'Circle', circlePositions);
         return;
-    end    
-    outputFrame = insertShape(snapshot,'FilledPolygon',patches);
+    end
+    outputFrame = insertShape(outputFrame,'FilledPolygon',patches);
     %outputFrame = insertShape(snapshot,'FilledPolygon',patches,'Color',{'red', 'green', 'blue','yellow' }); %step(alphaBlender, snapshot, warped, mask);
     locs = matched_snapshot_pts_coord;
     circlePositions = [locs(:,1) locs(:,2) 3*ones(length(locs), 1)];

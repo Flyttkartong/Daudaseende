@@ -1,5 +1,6 @@
 % Image setup
 referenceImage = rgb2gray(imread('daudasystem_smaller.jpg'));
+referenceImage = imrotate(referenceImage,-90);
 replacementImage = imread('test_image.jpg');
 replacementImage = resizeFirst(replacementImage, referenceImage);
 
@@ -19,8 +20,9 @@ imageHandle = setupImageHandle(vidobj);
 pointTracker = vision.PointTracker('MaxBidirectionalError', 2);
 trackedPoints = [];
 trackerInitialized = false;
-frameCount = 0;
-
+% frameCount = 0;
+% tic;
+% timecounter=0;
 while ishandle(imageHandle)
     frameCount = frameCount + 1;
     
@@ -54,6 +56,11 @@ while ishandle(imageHandle)
     catch
         % Ignore "deleted handle" error when window is closed
     end
+%     timecounter=timecounter+1;
+%     if mod(timecounter,100)==0
+%         timeVal=toc;
+%         timeVal=timeVal/timecounter
+%     end
 end
 
 % Stop the image capture and clean up
